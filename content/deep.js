@@ -17,7 +17,8 @@
   const ICONS = {
     close: svg('<path d="M6 6l12 12M18 6 6 18"/>'),
     speak: svg('<path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/>'),
-    retry: svg('<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>')
+    retry: svg('<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>'),
+    tab: svg('<path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>')
   };
 
   let cfg = { speakRate: 1, speakVoice: '', showIpa: true };
@@ -136,6 +137,16 @@
     .sec-row .rng { float: right; color: #9ca3af; font-size: 11.5px; }
     .sec-row div { color: #4b5563; margin-top: 2px; }
 
+    .origin { flex: none; color: #4f46e5; font-size: 12px; text-decoration: none; }
+    .origin:hover { text-decoration: underline; }
+    .origin[hidden] { display: none; }
+    /* 独立页面（reader/reader.html）：同一套侧栏铺满整页，内容居中 */
+    .panel.page { left: 0; width: 100vw; border-left: 0; box-shadow: none; font-size: 14px; transition: none; }
+    .panel.page .head, .panel.page .tabs, .panel.page .body { padding-left: max(16px, calc(50vw - 420px)); padding-right: max(16px, calc(50vw - 420px)); }
+    .panel.page .act-close, .panel.page .act-tab { display: none; }
+    .panel.page .en { font-size: 17px; }
+    .panel.page .art-h { font-size: 18px; }
+
     .pop {
       position: absolute; z-index: 5; width: 280px; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
       box-shadow: 0 10px 28px rgba(15,23,42,.16); padding: 10px 12px;
@@ -181,6 +192,8 @@
         <div class="head">
           <span class="title">精读</span>
           <span class="meta"></span>
+          <a class="origin" target="_blank" rel="noopener" hidden>原网页 ↗</a>
+          <button class="icon act-tab" title="在新标签页打开精读">${ICONS.tab}</button>
           <button class="icon act-close" title="关闭（Esc）">${ICONS.close}</button>
         </div>
         <div class="tabs">
@@ -199,6 +212,7 @@
     const $ = (s) => root.querySelector(s);
     ui = {
       panel: $('.panel'),
+      origin: $('.origin'),
       meta: $('.meta'),
       body: $('.body'),
       tabs: [...root.querySelectorAll('.tab')],
@@ -208,6 +222,8 @@
       pop: $('.pop')
     };
     $('.act-close').addEventListener('click', close);
+    $('.act-tab').addEventListener('click', openInTab);
+    if (standalone) ui.panel.classList.add('page');
     ui.tabs.forEach((t) => t.addEventListener('click', () => switchTab(t.dataset.tab)));
     ui.body.addEventListener('click', onBodyClick);
     ui.body.addEventListener(
@@ -237,7 +253,7 @@
   }
 
   function close() {
-    if (!ui) return;
+    if (!ui || standalone) return;
     ui.panel.classList.add('hidden');
     hidePop();
     stopSpeak();
@@ -293,11 +309,11 @@
     return { mode, sentences: [], results: [], errors: [], status: [], gist: null, gistError: '', done: false, foot: '', ...extra };
   }
 
-  function show(text) {
+  function show(text, meta) {
     const src = String(text || '').replace(/\s+/g, ' ').trim();
     if (!src) return;
     ensureUi();
-    state = newState('selection', { text: src });
+    state = newState('selection', { text: src, title: meta?.title || document.title, url: meta?.url || location.href });
     hidePop();
     ui.sents.innerHTML = '<div class="sent"><div class="skel"></div><div class="skel w2"></div></div>';
     ui.words.innerHTML = '';
@@ -323,11 +339,11 @@
   let followMuteUntil = 0;
   let hlStyle = null;
 
-  async function showArticle() {
-    if (!IS_TOP) return;
+  let standalone = false;
+
+  function beginArticle(title, url) {
     ensureUi();
-    const found = window.__htArticle ? window.__htArticle.extract() : { title: document.title, blocks: [], els: [] };
-    const mine = (state = newState('article', { title: found.title || '', items: null, active: -1 }));
+    state = newState('article', { title: title || '', url: url || location.href, items: null, active: -1 });
     hidePop();
     ui.sents.innerHTML = '<div class="sent"><div class="skel"></div><div class="skel w2"></div></div>';
     ui.words.innerHTML = '';
@@ -338,7 +354,13 @@
     gistTab().hidden = true;
     ui.panel.classList.remove('hidden');
     ui.body.scrollTop = 0;
+    return state;
+  }
 
+  async function showArticle() {
+    if (!IS_TOP) return;
+    const found = window.__htArticle ? window.__htArticle.extract() : { title: document.title, blocks: [], els: [] };
+    const mine = beginArticle(found.title);
     const res = await send({ type: 'HT_ARTICLE_PREPARE', blocks: found.blocks });
     if (state !== mine) return;
     if (!res?.ok) {
@@ -346,9 +368,20 @@
       ui.meta.textContent = '';
       return;
     }
-    state.items = res.items.map((it) => ({ ...it, el: found.els[it.src] || null }));
-    state.sentences = res.sentences;
-    state.truncated = !!res.truncated;
+    fillArticle(
+      res.items.map((it) => ({ ...it, el: found.els[it.src] || null })),
+      res.sentences,
+      !!res.truncated
+    );
+    // 从页面当前读到的位置开始，而不是总从第一段开始
+    setActive(activeFromPage(), 'auto');
+    schedulePump(250);
+  }
+
+  function fillArticle(items, sentences, truncated) {
+    state.items = items;
+    state.sentences = sentences;
+    state.truncated = truncated;
     state.paraItems = [];
     state.sentPara = [];
     state.items.forEach((it, k) => {
@@ -360,9 +393,54 @@
     renderArticle();
     updateMeta();
     connect().postMessage({ type: 'outline', title: state.title, items: state.items.map(({ kind, text }) => ({ kind, text })) });
-    // 从页面当前读到的位置开始，而不是总从第一段开始
-    setActive(activeFromPage(), 'auto');
-    schedulePump(250);
+  }
+
+  // ---- 新标签页：把当前精读的内容交给独立页面，那边按同样的方式重新取结果（已分析的句子走缓存） ----
+  function snapshot() {
+    if (!state) return null;
+    const doc = { mode: state.mode, title: state.title || document.title, url: state.url || location.href };
+    if (state.mode !== 'article') return state.text ? { ...doc, text: state.text } : null;
+    if (!state.items) return null;
+    return {
+      ...doc,
+      items: state.items.map(({ kind, text, from, to }) => ({ kind, text, from, to })),
+      sentences: state.sentences,
+      truncated: !!state.truncated,
+      active: state.active
+    };
+  }
+
+  async function openInTab() {
+    const doc = snapshot();
+    if (!doc) return;
+    const res = await send({ type: 'HT_READER_OPEN', doc });
+    if (!res?.ok) ui.meta.textContent = res?.error || '新标签页打开失败';
+  }
+
+  function restore(doc) {
+    if (!doc || typeof doc !== 'object') return false;
+    standalone = true;
+    ensureUi();
+    ui.panel.classList.add('page');
+    if (/^https?:/.test(doc.url || '')) {
+      ui.origin.href = doc.url;
+      ui.origin.title = doc.title || doc.url;
+      ui.origin.hidden = false;
+    }
+    if (doc.mode === 'article' && Array.isArray(doc.items) && Array.isArray(doc.sentences)) {
+      beginArticle(doc.title, doc.url);
+      fillArticle(
+        doc.items.map((it) => ({ ...it, el: null })),
+        doc.sentences,
+        !!doc.truncated
+      );
+      setActive(Number.isInteger(doc.active) ? doc.active : -1, 'auto');
+      schedulePump(250);
+      return true;
+    }
+    if (!doc.text) return false;
+    show(doc.text, doc);
+    return true;
   }
 
   function renderArticle() {
@@ -374,13 +452,14 @@
         let sents = '';
         for (let i = it.from; i < it.to; i++) sents += `<div class="sent" data-i="${i}"></div>`;
         return `<div class="para" data-b="${k}">
-          <button class="para-head" data-jump="${k}" title="在原文中定位这一段"><span>第 ${pn} 段 · ${it.to - it.from} 句</span><span class="jump">定位原文</span></button>
+          <button class="para-head" data-jump="${k}"${standalone ? '' : ' title="在原文中定位这一段"'}><span>第 ${pn} 段 · ${it.to - it.from} 句</span>${standalone ? '' : '<span class="jump">定位原文</span>'}</button>
           ${sents}</div>`;
       })
       .join('');
     ui.sents.innerHTML =
       `<div class="art-bar"><span class="art-title" title="${esc(state.title)}">${esc(state.title)}</span>` +
-      `<button class="chip${follow ? ' on' : ''}" data-follow title="滚动网页时，侧栏自动跟到正在读的那一段">跟随原文</button></div>` +
+      (standalone ? '' : `<button class="chip${follow ? ' on' : ''}" data-follow title="滚动网页时，侧栏自动跟到正在读的那一段">跟随原文</button>`) +
+      '</div>' +
       '<div class="art-gist" hidden></div>' +
       legendHtml() +
       body +
@@ -772,8 +851,8 @@
         meaning: w.inContext,
         common: w.common,
         sentence: state.sentences[si] || '',
-        url: location.href,
-        title: document.title
+        url: state.url || location.href,
+        title: state.title || document.title
       }
     });
     if (!res?.ok) {
@@ -938,6 +1017,7 @@
   }
 
   chrome.runtime.onMessage.addListener((msg) => {
+    if (standalone) return;
     if (msg?.type === 'HT_DEEP_SHOW' && IS_TOP) show(msg.text);
     else if (msg?.type === 'HT_ARTICLE_START' && IS_TOP) showArticle();
     else if (msg?.type === 'HT_DEEP_SELECTION') {
@@ -967,6 +1047,7 @@
   window.__htDeep = {
     open,
     article: showArticle,
+    restore,
     close,
     isOpen,
     owns: (node) => !!host && (node === host || host.contains(node))

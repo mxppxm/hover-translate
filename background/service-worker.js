@@ -17,6 +17,7 @@ import {
 import { deepKey, getDeep, putDeep } from '../shared/deepcache.js';
 import { addWord, readVocab, removeWord } from '../shared/vocab.js';
 import { normKey } from '../shared/cache.js';
+import { withLock } from '../shared/lock.js';
 
 const MENU_ID = 'hover-translate-selection';
 const MENU_DEEP_ID = 'hover-translate-deep';
@@ -194,6 +195,28 @@ export async function articleOutline(title, items, post) {
   }
 }
 
+// 「在新标签页打开」：把侧栏当前的内容存下来（只留最近几份），独立页面按 id 取
+const READER_KEEP = 6;
+
+async function openReader(doc, fromTab) {
+  if (!doc || typeof doc !== 'object') throw new Error('没有可打开的内容');
+  const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  await withLock(async () => {
+    const { reader = {} } = await chrome.storage.local.get('reader');
+    reader[id] = { doc, ts: Date.now() };
+    Object.keys(reader)
+      .sort((a, b) => reader[b].ts - reader[a].ts)
+      .slice(READER_KEEP)
+      .forEach((k) => delete reader[k]);
+    await chrome.storage.local.set({ reader });
+  });
+  await chrome.tabs.create({
+    url: chrome.runtime.getURL('reader/reader.html') + '?id=' + id,
+    ...(fromTab?.index !== undefined ? { index: fromTab.index + 1 } : {}),
+    ...(fromTab?.id ? { openerTabId: fromTab.id } : {})
+  });
+}
+
 async function wordLookup(word, sentence) {
   const w = String(word || '').trim();
   if (!w) return { ok: false, error: '没有单词' };
@@ -298,6 +321,12 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (sender.tab?.id) showDeepInTop(sender.tab.id, msg.text);
     sendResponse({ ok: true });
     return false;
+  }
+  if (msg?.type === 'HT_READER_OPEN') {
+    openReader(msg.doc, sender.tab)
+      .then(() => sendResponse({ ok: true }))
+      .catch((err) => sendResponse({ ok: false, error: err?.message || String(err) }));
+    return true;
   }
   if (msg?.type === 'HT_ARTICLE_PREPARE') {
     const article = prepareArticle(msg.blocks);
