@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>划词翻译</title>
+<link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <h1>划词翻译</h1>
+    <span class="model" id="model">—</span>
+  </header>
+
+  <label class="switch">
+    <input type="checkbox" id="autoTranslate">
+    <span>选中即翻译</span>
+    <small>关闭后改用浮动「译」按钮或右键菜单翻译</small>
+  </label>
+  <label class="switch">
+    <input type="checkbox" id="autoSpeak">
+    <span>翻译后自动朗读原文</span>
+    <small>用系统 / Chrome 自带语音，卡片上的 🔊 可随时手动朗读</small>
+  </label>
+
+  <div class="stats" id="stats"></div>
+  <p class="hint" id="priceHint" hidden>在设置里填输入/输出单价（元/百万 tokens）后可显示预估费用</p>
+
+  <button id="readPage" class="primary" title="自动识别本页正文，随阅读进度逐段精读（快捷键 Alt+R）">精读本页全文</button>
+  <p class="hint" id="readHint" hidden></p>
+
+  <div class="actions">
+    <button id="openHistory">翻译记录</button>
+    <button id="openVocab">生词本 <span id="vocabBadge" class="badge"></span></button>
+    <button id="openOptions">设置</button>
+  </div>
+
+  <p class="tip">用法：在网页里划选英文；已选中的文本可点右键 →「划词翻译：译为中文」。读长文时点「精读本页全文」，不用选中，侧栏会跟着阅读位置逐段分析。相同内容直接命中本地记录，不再请求模型、也不消耗 token。</p>
+  <script src="popup.js" type="module"></script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>划词翻译 · 设置</title>
+<link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main>
+    <h1>划词翻译设置</h1>
+    <p class="lead">默认走 mico 网关的 <code>deepseek-v4.1-flash</code>（即 4.1-flash），开箱可用。换模型或换网关在这里改。</p>
+
+    <section>
+      <h2>模型接口</h2>
+      <label>接口地址（OpenAI 兼容 /chat/completions）<input id="baseUrl" type="text" spellcheck="false"></label>
+      <label>API Key <span class="row"><input id="apiKey" type="password" spellcheck="false"><button id="toggleKey" type="button">显示</button></span></label>
+      <label>模型名
+        <span class="row">
+          <input id="model" type="text" list="models" spellcheck="false">
+          <datalist id="models"></datalist>
+        </span>
+      </label>
+      <div class="grid2">
+        <label>温度 <input id="temperature" type="number" min="0" max="2" step="0.1"></label>
+        <label>单次最大输出 tokens <input id="maxTokens" type="number" min="64" max="8192" step="64"></label>
+      </div>
+      <label>请求超时（毫秒）<input id="timeoutMs" type="number" min="3000" max="120000" step="1000"></label>
+      <label class="check"><input id="thinking" type="checkbox"> 先思考再作答</label>
+      <p class="note">关闭（默认）会带上 <code>reasoning_effort: "none"</code>：实测同一句话输出从 92 tokens 降到 5 tokens，翻译场景通常不需要思考。想观察提示词效果时再打开。</p>
+      <div class="row">
+        <button id="test" type="button">测试连接</button>
+        <span id="testResult" class="result"></span>
+      </div>
+    </section>
+
+    <section>
+      <h2>朗读</h2>
+      <p class="note">用系统 / Chrome 自带语音（Web Speech API），不需要额外插件。</p>
+      <label class="check"><input id="autoSpeak" type="checkbox"> 翻译出结果后自动朗读原文</label>
+      <div class="grid2">
+        <label>语速（0.5 – 2）<input id="speakRate" type="number" min="0.5" max="2" step="0.1"></label>
+        <label>语音
+          <select id="speakVoice">
+            <option value="">自动（优先英文音色）</option>
+          </select>
+        </label>
+      </div>
+      <div class="row">
+        <button id="previewVoice" type="button">试听 Hello</button>
+        <span id="voiceResult" class="result"></span>
+      </div>
+    </section>
+
+    <section>
+      <h2>费用</h2>
+      <p class="note">按网关实际单价填写（元 / 百万 tokens），留 0 则只显示 token 用量、不显示金额。</p>
+      <div class="grid2">
+        <label>输入单价<input id="inPrice" type="number" min="0" step="0.01" placeholder="0"></label>
+        <label>输出单价<input id="outPrice" type="number" min="0" step="0.01" placeholder="0"></label>
+      </div>
+    </section>
+
+    <section>
+      <h2>精读与生词本</h2>
+      <label>英语水平（精读时只把超出这个水平的词列为重点词）
+        <select id="level">
+          <option value="cet4">大学英语四级</option>
+          <option value="cet6">大学英语六级</option>
+          <option value="kaoyan">考研英语</option>
+          <option value="ielts">雅思 / 托福</option>
+          <option value="all">不限（只列生僻词）</option>
+        </select>
+      </label>
+      <label class="check"><input id="showIpa" type="checkbox"> 显示音标</label>
+      <label class="check"><input id="markVocab" type="checkbox"> 在网页中标出生词本里的词</label>
+    </section>
+
+    <section>
+      <h2>翻译行为</h2>
+      <label class="check"><input id="autoTranslate" type="checkbox"> 选中文本后自动翻译（关闭则显示浮动「译」按钮）</label>
+    </section>
+
+    <div class="row">
+      <button id="save" class="primary" type="button">保存</button>
+      <button id="reset" type="button">恢复默认</button>
+      <span id="saved" class="result"></span>
+    </div>
+  </main>
+  <script src="options.js" type="module"></script>
+</body>
+</html>

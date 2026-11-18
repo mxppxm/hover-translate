@@ -1,0 +1,61 @@
+{
+  "manifest_version": 3,
+  "name": "划词翻译 (Hover Translate)",
+  "version": "0.3.0",
+  "description": "划词英译中 + 精读（逐句结构拆解、语境词义，支持整篇文章自动精读）+ 生词本复习，大模型驱动，带本地缓存。",
+  "minimum_chrome_version": "110",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": [
+    "storage",
+    "contextMenus"
+  ],
+  "host_permissions": [
+    "https://*/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*"
+  ],
+  "background": {
+    "service_worker": "background/service-worker.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "划词翻译",
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png"
+    }
+  },
+  "options_page": "options/options.html",
+  "content_scripts": [
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*",
+        "file:///*"
+      ],
+      "js": [
+        "content/article.js",
+        "content/deep.js",
+        "content/content.js",
+        "content/vocab-mark.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ],
+  "commands": {
+    "deep-read": {
+      "suggested_key": {
+        "default": "Alt+R",
+        "mac": "Alt+R"
+      },
+      "description": "精读选中内容；没有选中时精读全文（再按一次关闭侧栏）"
+    }
+  }
+}

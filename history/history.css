@@ -1,0 +1,119 @@
+:root { color-scheme: light dark; }
+* { box-sizing: border-box; }
+body {
+  margin: 0; min-height: 100vh;
+  font: 13px/1.6 -apple-system, "PingFang SC", system-ui, sans-serif;
+  color: #111827; background: #f9fafb;
+}
+header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 20px; background: #fff; border-bottom: 1px solid #e5e7eb;
+  position: sticky; top: 0; z-index: 2;
+}
+h1 { font-size: 15px; margin: 0; }
+.spacer { flex: 1; }
+input[type="search"], select {
+  padding: 6px 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 12px; background: #fff; color: inherit;
+}
+input[type="search"] { width: 240px; }
+button {
+  padding: 6px 12px; border: 1px solid #d1d5db; background: #fff; color: inherit;
+  border-radius: 8px; cursor: pointer; font-size: 12px;
+}
+button:hover { background: #f3f4f6; }
+main { padding: 18px 20px 40px; }
+.summary {
+  display: flex; flex-wrap: wrap; gap: 6px 18px;
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+  padding: 10px 14px; margin-bottom: 12px; font-size: 12px; color: #374151;
+}
+.summary b { font-size: 13px; }
+.summary .cost { color: #4338ca; font-weight: 600; }
+.summary .muted { color: #9ca3af; font-size: 11px; }
+table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid #f1f3f5; vertical-align: top; }
+th { font-size: 11px; color: #6b7280; font-weight: 600; background: #fcfcfd; }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:hover { background: #fafafa; }
+.src-col { width: 30%; color: #6b7280; word-break: break-word; }
+.token-col { width: 96px; font-size: 11px; color: #6b7280; white-space: nowrap; }
+.token-col b { color: #111827; font-weight: 600; }
+.meta-col { width: 108px; font-size: 11px; color: #6b7280; }
+.time-col { width: 150px; font-size: 11px; color: #9ca3af; white-space: nowrap; }
+.op-col { width: 92px; white-space: nowrap; }
+.star-col { width: 34px; }
+.badge { display: inline-block; font-size: 11px; padding: 1px 6px; border-radius: 999px; background: #eef2ff; color: #4338ca; }
+.badge.model { background: #ecfdf5; color: #047857; }
+.star { border: 0; background: transparent; cursor: pointer; font-size: 14px; color: #d1d5db; padding: 0 4px; }
+.star.on { color: #f59e0b; }
+.model-name { font-size: 10px; color: #9ca3af; word-break: break-all; }
+.empty { color: #6b7280; text-align: center; padding: 40px 0; }
+@media (prefers-color-scheme: dark) {
+  body { background: #111827; color: #f9fafb; }
+  header, table, .summary { background: #1f2937; border-color: #374151; }
+  th { background: #1b2432; color: #9ca3af; }
+  th, td { border-bottom-color: #374151; }
+  tbody tr:hover { background: #243040; }
+  input[type="search"], select, button { background: #111827; border-color: #374151; }
+  button:hover { background: #374151; }
+  .src-col { color: #9ca3af; }
+  .badge { background: #312e81; color: #c7d2fe; }
+  .badge.model { background: #064e3b; color: #a7f3d0; }
+  .token-col b { color: #f9fafb; }
+  .summary .cost { color: #c7d2fe; }
+}
+
+/* ---- 导航与生词本 ---- */
+.nav { display: flex; gap: 4px; }
+.nav a { padding: 5px 12px; border-radius: 8px; color: #4b5563; text-decoration: none; font-size: 14px; }
+.nav a:hover { background: #f3f4f6; }
+.nav a.on { background: #eef2ff; color: #4338ca; font-weight: 600; }
+.count { font-size: 11px; color: #9ca3af; font-weight: 400; }
+.count.due { color: #dc2626; font-weight: 600; }
+.tools { display: flex; align-items: center; gap: 8px; }
+.tools[hidden], main[hidden] { display: none; }
+.word-col { width: 150px; }
+.vw { font-size: 14px; }
+.mean-col { width: 26%; }
+.sent-col { color: #374151; }
+.sent-col mark, .rv-sent mark { background: #fef3c7; color: inherit; border-radius: 3px; padding: 0 2px; }
+.review-col { width: 100px; }
+.sub { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+.sub a { color: #9ca3af; }
+.pos { color: #6366f1; font-size: 12px; }
+.tag { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px; background: #f3f4f6; color: #4b5563; }
+.tag.due { background: #fef2f2; color: #dc2626; }
+.tag.ok { background: #ecfdf5; color: #047857; }
+
+/* ---- 复习 ---- */
+.review { max-width: 620px; margin: 30px auto 0; }
+.rv-progress { color: #9ca3af; font-size: 12px; text-align: right; margin-bottom: 8px; }
+.rv-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 34px 36px; min-height: 240px; box-shadow: 0 4px 18px rgba(15,23,42,.05); }
+.rv-word { font: 600 30px/1.3 Georgia, serif; display: flex; align-items: center; gap: 10px; }
+.rv-say { border: 0; background: transparent; cursor: pointer; font-size: 16px; padding: 2px 6px; }
+.rv-sent { margin-top: 16px; font: 16px/1.8 Georgia, serif; color: #374151; }
+.rv-back { margin-top: 22px; padding-top: 18px; border-top: 1px dashed #e5e7eb; }
+.rv-back[hidden] { display: none; }
+.rv-ipa { color: #6b7280; }
+.rv-mean { font-size: 17px; margin-top: 6px; color: #111827; }
+.rv-actions { display: flex; justify-content: center; gap: 12px; margin-top: 18px; }
+.rv-actions button { padding: 9px 22px; font-size: 14px; border-radius: 10px; }
+.rv-actions .primary { background: #4f46e5; color: #fff; border-color: #4f46e5; }
+.rv-actions .primary:hover { background: #4338ca; }
+.rv-actions .again { color: #dc2626; border-color: #fecaca; }
+.rv-actions .hard { color: #b45309; border-color: #fde68a; }
+.rv-actions .good { color: #047857; border-color: #a7f3d0; }
+kbd { font: 11px "SF Mono", Menlo, monospace; opacity: .6; margin-left: 4px; }
+.rv-empty { text-align: center; color: #6b7280; padding: 60px 0; }
+.rv-big { font-size: 20px; color: #111827; margin-bottom: 8px; }
+@media (prefers-color-scheme: dark) {
+  .nav a { color: #d1d5db; }
+  .nav a:hover { background: #374151; }
+  .nav a.on { background: #312e81; color: #c7d2fe; }
+  .sent-col { color: #d1d5db; }
+  .tag { background: #374151; color: #d1d5db; }
+  .rv-card { background: #1f2937; border-color: #374151; }
+  .rv-sent { color: #d1d5db; }
+  .rv-mean, .rv-big { color: #f9fafb; }
+  .sent-col mark, .rv-sent mark { background: #78350f; }
+}

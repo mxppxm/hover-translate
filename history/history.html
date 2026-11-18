@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>翻译记录 · 划词翻译</title>
+<link rel="stylesheet" href="history.css">
+</head>
+<body>
+  <header>
+    <nav class="nav">
+      <a href="#records" data-view="records">翻译记录</a>
+      <a href="#vocab" data-view="vocab">生词本 <span id="vocabCount" class="count"></span></a>
+      <a href="#review" data-view="review">复习 <span id="dueCount" class="count due"></span></a>
+    </nav>
+    <span class="spacer"></span>
+    <div class="tools" data-tools="records">
+      <input id="search" type="search" placeholder="搜索原文或译文">
+      <select id="filter">
+        <option value="all">全部</option>
+        <option value="star">仅收藏</option>
+      </select>
+      <button id="clear">清空记录</button>
+    </div>
+    <div class="tools" data-tools="vocab" hidden>
+      <input id="vocabSearch" type="search" placeholder="搜索单词、释义或原句">
+      <select id="vocabFilter">
+        <option value="all">全部</option>
+        <option value="due">待复习</option>
+        <option value="learning">学习中</option>
+        <option value="mastered">已掌握</option>
+      </select>
+      <button id="exportCsv">导出 CSV</button>
+      <button id="exportAnki" title="Anki：文件 → 导入，字段分隔符选制表符，勾选「允许 HTML」">导出 Anki</button>
+      <button id="clearVocab">清空生词本</button>
+    </div>
+  </header>
+
+  <main data-view="records">
+    <div id="summary" class="summary"></div>
+    <table>
+      <thead>
+        <tr>
+          <th class="star-col"></th>
+          <th class="src-col">原文</th>
+          <th>译文</th>
+          <th class="token-col">tokens</th>
+          <th class="meta-col">来源</th>
+          <th class="time-col">时间</th>
+          <th class="op-col"></th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <p id="empty" class="empty" hidden>还没有记录。去网页里划选一段英文试试。</p>
+  </main>
+
+  <main data-view="vocab" hidden>
+    <div id="vocabSummary" class="summary"></div>
+    <table>
+      <thead>
+        <tr>
+          <th class="word-col">单词</th>
+          <th class="mean-col">释义</th>
+          <th>原句</th>
+          <th class="review-col">复习</th>
+          <th class="time-col">加入时间</th>
+          <th class="op-col"></th>
+        </tr>
+      </thead>
+      <tbody id="vocabRows"></tbody>
+    </table>
+    <p id="vocabEmpty" class="empty" hidden>生词本还是空的。在精读侧栏点「＋生词」，或在划词卡片上点书签图标加入。</p>
+  </main>
+
+  <main data-view="review" hidden>
+    <div id="review" class="review"></div>
+  </main>
+
+  <script src="history.js" type="module"></script>
+</body>
+</html>
