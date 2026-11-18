@@ -9,6 +9,7 @@
   <header>
     <nav class="nav">
       <a href="#records" data-view="records">翻译记录</a>
+      <a href="#readings" data-view="readings">精读记录 <span id="readingCount" class="count"></span></a>
       <a href="#vocab" data-view="vocab">生词本 <span id="vocabCount" class="count"></span></a>
       <a href="#review" data-view="review">复习 <span id="dueCount" class="count due"></span></a>
     </nav>
@@ -20,6 +21,10 @@
         <option value="star">仅收藏</option>
       </select>
       <button id="clear">清空记录</button>
+    </div>
+    <div class="tools" data-tools="readings" hidden>
+      <input id="readingSearch" type="search" placeholder="搜索标题、网址或原文">
+      <button id="clearReadings">清空精读记录</button>
     </div>
     <div class="tools" data-tools="vocab" hidden>
       <input id="vocabSearch" type="search" placeholder="搜索单词、释义或原句">
@@ -52,6 +57,23 @@
       <tbody id="rows"></tbody>
     </table>
     <p id="empty" class="empty" hidden>还没有记录。去网页里划选一段英文试试。</p>
+  </main>
+
+  <main data-view="readings" hidden>
+    <div id="readingSummary" class="summary"></div>
+    <table>
+      <thead>
+        <tr>
+          <th>文章 / 选段</th>
+          <th class="review-col">篇幅</th>
+          <th class="review-col">进度</th>
+          <th class="time-col">最近阅读</th>
+          <th class="op-col"></th>
+        </tr>
+      </thead>
+      <tbody id="readingRows"></tbody>
+    </table>
+    <p id="readingEmpty" class="empty" hidden>还没有精读记录。在英文文章页面点扩展弹窗里的「精读本页全文」，读过的文章会记在这里。</p>
   </main>
 
   <main data-view="vocab" hidden>

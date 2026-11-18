@@ -376,6 +376,20 @@
     // 从页面当前读到的位置开始，而不是总从第一段开始
     setActive(activeFromPage(), 'auto');
     schedulePump(250);
+    // 记进精读记录（记录页可重新打开）；同一网址只留一条
+    send({ type: 'HT_READING_SAVE', doc: snapshot() }).then((saved) => {
+      if (saved?.ok && state === mine) state.readingId = saved.id;
+    });
+  }
+
+  let progressTimer = null;
+  function saveProgress() {
+    if (state?.mode !== 'article' || !state.readingId) return;
+    clearTimeout(progressTimer);
+    const mine = state;
+    progressTimer = setTimeout(() => {
+      send({ type: 'HT_READING_PROGRESS', id: mine.readingId, active: mine.active, read: mine.results.filter(Boolean).length });
+    }, 1500);
   }
 
   function fillArticle(items, sentences, truncated) {
@@ -417,7 +431,7 @@
     if (!res?.ok) ui.meta.textContent = res?.error || '新标签页打开失败';
   }
 
-  function restore(doc) {
+  function restore(doc, readingId) {
     if (!doc || typeof doc !== 'object') return false;
     standalone = true;
     ensureUi();
@@ -434,6 +448,7 @@
         doc.sentences,
         !!doc.truncated
       );
+      state.readingId = readingId || '';
       setActive(Number.isInteger(doc.active) ? doc.active : -1, 'auto');
       schedulePump(250);
       return true;
@@ -594,6 +609,7 @@
       refreshAdded(msg.data.words.map((w) => w.word));
       updateMeta();
       updateWordsTab();
+      saveProgress();
       if (state.mode === 'article') schedulePump();
       return;
     }

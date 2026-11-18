@@ -341,3 +341,40 @@ test('导读：段落编号、长文按段截断；结构里的段落号夹到�
   assert.notEqual(deep.textDigest('abc'), deep.textDigest('abd'));
   assert.ok(deep.textDigest('x'.repeat(20000)).length < 40);
 });
+
+test('精读记录：同一网址只留一条并保留进度，内容变了进度清零，进度只增不减，超量按最近阅读淘汰', async () => {
+  const readings = await import('../shared/readings.js');
+  await readings.clearReadings();
+  const doc = (url, n = 3) => ({
+    mode: 'article',
+    title: 'T',
+    url,
+    items: [{ kind: 'p', text: 'x', from: 0, to: n }],
+    sentences: Array.from({ length: n }, (_, i) => `Sentence ${i}.`),
+    active: 0
+  });
+  assert.equal(await readings.saveReading({ mode: 'article', sentences: [] }), null);
+  assert.equal(await readings.saveReading({ mode: 'selection', text: '' }), null);
+
+  const first = await readings.saveReading(doc('https://a.example/post'), 1000);
+  assert.equal(first.id, readings.readingId(doc('https://a.example/post')));
+  assert.equal('active' in first.doc, false, '阅读位置存在记录上，不混进文章内容');
+  await readings.updateReading(first.id, { active: 0, read: 2 }, 2000);
+  await readings.updateReading(first.id, { read: 1 }, 2500);
+  const again = await readings.saveReading({ ...doc('https://a.example/post'), active: -1 }, 3000);
+  assert.deepEqual([again.ts, again.lastOpen, again.read, again.active], [1000, 3000, 2, 0]);
+  const changed = await readings.saveReading(doc('https://a.example/post', 5), 4000);
+  assert.equal(changed.read, 0);
+  assert.equal(Object.keys(await readings.readReadings()).length, 1);
+
+  const sel = await readings.saveReading({ mode: 'selection', text: 'A rolling  stone gathers no moss.', url: 'https://a.example/' }, 4500);
+  assert.equal(sel.id, readings.readingId({ mode: 'selection', text: 'a rolling stone gathers no moss.' }));
+
+  for (let i = 0; i < readings.READINGS_MAX + 3; i++) await readings.saveReading(doc(`https://b.example/${i}`), 5000 + i);
+  const list = readings.listReadings(await readings.readReadings());
+  assert.equal(list.length, readings.READINGS_MAX);
+  assert.equal(list[0].doc.url, `https://b.example/${readings.READINGS_MAX + 2}`);
+  assert.ok(!list.some((e) => e.id === first.id), '最久没读的被淘汰');
+  await readings.removeReading(list[0].id);
+  assert.equal(Object.keys(await readings.readReadings()).length, readings.READINGS_MAX - 1);
+});

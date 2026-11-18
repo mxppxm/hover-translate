@@ -17,7 +17,7 @@ import {
 import { deepKey, getDeep, putDeep } from '../shared/deepcache.js';
 import { addWord, readVocab, removeWord } from '../shared/vocab.js';
 import { normKey } from '../shared/cache.js';
-import { withLock } from '../shared/lock.js';
+import { saveReading, updateReading } from '../shared/readings.js';
 
 const MENU_ID = 'hover-translate-selection';
 const MENU_DEEP_ID = 'hover-translate-deep';
@@ -195,23 +195,12 @@ export async function articleOutline(title, items, post) {
   }
 }
 
-// 「在新标签页打开」：把侧栏当前的内容存下来（只留最近几份），独立页面按 id 取
-const READER_KEEP = 6;
-
+// 「在新标签页打开」：内容存进精读记录，独立页面按 id 取
 async function openReader(doc, fromTab) {
-  if (!doc || typeof doc !== 'object') throw new Error('没有可打开的内容');
-  const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-  await withLock(async () => {
-    const { reader = {} } = await chrome.storage.local.get('reader');
-    reader[id] = { doc, ts: Date.now() };
-    Object.keys(reader)
-      .sort((a, b) => reader[b].ts - reader[a].ts)
-      .slice(READER_KEEP)
-      .forEach((k) => delete reader[k]);
-    await chrome.storage.local.set({ reader });
-  });
+  const entry = await saveReading(doc);
+  if (!entry) throw new Error('没有可打开的内容');
   await chrome.tabs.create({
-    url: chrome.runtime.getURL('reader/reader.html') + '?id=' + id,
+    url: chrome.runtime.getURL('reader/reader.html') + '?id=' + entry.id,
     ...(fromTab?.index !== undefined ? { index: fromTab.index + 1 } : {}),
     ...(fromTab?.id ? { openerTabId: fromTab.id } : {})
   });
@@ -250,6 +239,8 @@ function setupMenus() {
 }
 
 chrome.runtime.onInstalled.addListener(setupMenus);
+// 0.3 早期版本把新标签页的内容存在 reader 键下，已并入精读记录
+chrome.runtime.onInstalled.addListener(() => chrome.storage.local.remove('reader'));
 chrome.runtime.onStartup.addListener(setupMenus);
 
 function showDeepInTop(tabId, text) {
@@ -326,6 +317,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     openReader(msg.doc, sender.tab)
       .then(() => sendResponse({ ok: true }))
       .catch((err) => sendResponse({ ok: false, error: err?.message || String(err) }));
+    return true;
+  }
+  if (msg?.type === 'HT_READING_SAVE') {
+    saveReading(msg.doc)
+      .then((entry) => sendResponse({ ok: !!entry, id: entry?.id || '' }))
+      .catch((err) => sendResponse({ ok: false, error: String(err) }));
+    return true;
+  }
+  if (msg?.type === 'HT_READING_PROGRESS') {
+    updateReading(msg.id, { active: msg.active, read: msg.read }).then(() => sendResponse({ ok: true }));
     return true;
   }
   if (msg?.type === 'HT_ARTICLE_PREPARE') {

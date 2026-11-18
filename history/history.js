@@ -2,6 +2,7 @@ import { readCache, listEntries, removeEntry, clearCache, setStar } from '../sha
 import { getConfig } from '../shared/config.js';
 import { estimateCost, formatCost, formatTokens } from '../shared/usage.js';
 import { initVocab } from './vocab-view.js';
+import { initReadings } from './readings-view.js';
 
 const state = { entries: [], keyword: '', onlyStar: false };
 const cfg = await getConfig();
@@ -70,23 +71,6 @@ function render() {
     star.addEventListener('click', async () => {
       await setStar(entry.text, !entry.star);
       await load();
-
-const vocabView = await initVocab();
-
-function route() {
-  const view = ['records', 'vocab', 'review'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'records';
-  document.querySelectorAll('main[data-view]').forEach((m) => {
-    m.hidden = m.dataset.view !== view;
-  });
-  document.querySelectorAll('[data-tools]').forEach((t) => {
-    t.hidden = t.dataset.tools !== view;
-  });
-  document.querySelectorAll('.nav a').forEach((a) => a.classList.toggle('on', a.dataset.view === view));
-  document.title = { records: '翻译记录', vocab: '生词本', review: '复习' }[view] + ' · 划词翻译';
-  vocabView.enter(view);
-}
-window.addEventListener('hashchange', route);
-route();
     });
     starCell.appendChild(star);
 
@@ -133,23 +117,6 @@ route();
     delBtn.addEventListener('click', async () => {
       await removeEntry(entry.key);
       await load();
-
-const vocabView = await initVocab();
-
-function route() {
-  const view = ['records', 'vocab', 'review'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'records';
-  document.querySelectorAll('main[data-view]').forEach((m) => {
-    m.hidden = m.dataset.view !== view;
-  });
-  document.querySelectorAll('[data-tools]').forEach((t) => {
-    t.hidden = t.dataset.tools !== view;
-  });
-  document.querySelectorAll('.nav a').forEach((a) => a.classList.toggle('on', a.dataset.view === view));
-  document.title = { records: '翻译记录', vocab: '生词本', review: '复习' }[view] + ' · 划词翻译';
-  vocabView.enter(view);
-}
-window.addEventListener('hashchange', route);
-route();
     });
     opCell.append(copyBtn, delBtn);
 
@@ -177,31 +144,15 @@ document.getElementById('clear').addEventListener('click', async () => {
   if (!confirm('清空全部翻译记录？')) return;
   await clearCache();
   await load();
-
-const vocabView = await initVocab();
-
-function route() {
-  const view = ['records', 'vocab', 'review'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'records';
-  document.querySelectorAll('main[data-view]').forEach((m) => {
-    m.hidden = m.dataset.view !== view;
-  });
-  document.querySelectorAll('[data-tools]').forEach((t) => {
-    t.hidden = t.dataset.tools !== view;
-  });
-  document.querySelectorAll('.nav a').forEach((a) => a.classList.toggle('on', a.dataset.view === view));
-  document.title = { records: '翻译记录', vocab: '生词本', review: '复习' }[view] + ' · 划词翻译';
-  vocabView.enter(view);
-}
-window.addEventListener('hashchange', route);
-route();
 });
 
 await load();
 
 const vocabView = await initVocab();
+const readingsView = await initReadings();
 
 function route() {
-  const view = ['records', 'vocab', 'review'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'records';
+  const view = ['records', 'readings', 'vocab', 'review'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'records';
   document.querySelectorAll('main[data-view]').forEach((m) => {
     m.hidden = m.dataset.view !== view;
   });
@@ -209,8 +160,9 @@ function route() {
     t.hidden = t.dataset.tools !== view;
   });
   document.querySelectorAll('.nav a').forEach((a) => a.classList.toggle('on', a.dataset.view === view));
-  document.title = { records: '翻译记录', vocab: '生词本', review: '复习' }[view] + ' · 划词翻译';
+  document.title = { records: '翻译记录', readings: '精读记录', vocab: '生词本', review: '复习' }[view] + ' · 划词翻译';
   vocabView.enter(view);
+  readingsView.enter(view);
 }
 window.addEventListener('hashchange', route);
 route();

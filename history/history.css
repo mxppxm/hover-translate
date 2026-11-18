@@ -117,3 +117,7 @@ kbd { font: 11px "SF Mono", Menlo, monospace; opacity: .6; margin-left: 4px; }
   .rv-mean, .rv-big { color: #f9fafb; }
   .sent-col mark, .rv-sent mark { background: #78350f; }
 }
+.reading-title { color: inherit; font-weight: 600; text-decoration: none; }
+.reading-title:hover { color: #4f46e5; text-decoration: underline; }
+a.btn { font-size: 12px; color: #4f46e5; text-decoration: none; }
+a.btn:hover { text-decoration: underline; }
